@@ -8,7 +8,7 @@ const categorias = ["PANADERIA","FIAMBRES","LACTEOS", "CARNES", "BEBIDAS", "VERD
 function productosUIjQuery(productos, id){
   $(id).empty()
   for (const producto of productos) {
-    $(id).append(`<div class="card" style="width: 18rem;">
+    $(id).append(`<div class="card productos" style="width: 18rem;">
                     <img src="https://via.placeholder.com/150" class="card-img-top" alt="...">
                     <div class="card-body">
                       <h5 class="card-title">${producto.nombre}</h5>
@@ -166,3 +166,12 @@ productosUIjQuery(productos, '#productosContenedor');
 
 
 $('.btn-compra').on("click", comprarProducto);
+
+// $("#btn-flashOffer").click(function(e){
+//   $("#offer").slideDown(2000).slideUp(slideDown);
+// })
+$("#offer").animate({
+  margin: '30px',
+  fontSize: "2em",
+  width: 500
+}, 2000).delay(1000).slideUp(1000);
