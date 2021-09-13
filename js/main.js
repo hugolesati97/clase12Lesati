@@ -1,11 +1,11 @@
 // Global ARRAYS
 const productos = [];
-const carrito   = [];
-const categorias = ["PANADERIA","FIAMBRES","LACTEOS", "CARNES", "BEBIDAS", "VERDULERIA", "VARIOS"];
+const carrito = [];
+const categorias = ["PANADERIA", "FIAMBRES", "LACTEOS", "CARNES", "BEBIDAS", "VERDULERIA", "VARIOS"];
 
 
 // Jquery DOM
-function productosUIjQuery(productos, id){
+function productosUIjQuery(productos, id) {
   $(id).empty()
   for (const producto of productos) {
     $(id).append(`<div class="card productos" style="width: 18rem;">
@@ -22,18 +22,18 @@ function productosUIjQuery(productos, id){
 
 
 // Management PRODUCTOS
-function comprarProducto(e){
+function comprarProducto(e) {
   //Refresh
   e.preventDefault();
 
   //Id button
-  const idProducto   = e.target.id;
+  const idProducto = e.target.id;
 
   //Object producto
   const seleccionado = carrito.find(p => p.id == idProducto);
-  
+
   // Find array
-  if(seleccionado == undefined){
+  if (seleccionado == undefined) {
     carrito.push(productos.find(p => p.id == idProducto));
   } else {
     // add
@@ -48,7 +48,7 @@ function comprarProducto(e){
 
 
 
-function carritoUI(productos){
+function carritoUI(productos) {
   $('#carritoCantidad').html(productos.length);
 
   $('#carritoProductos').empty();
@@ -57,14 +57,28 @@ function carritoUI(productos){
     $('#carritoProductos').append(registroCarrito(producto));
   }
 
+  //Total
+
+  $("#carritoProductos").append(`<p id="totalCarrito"> TOTAL ${totalCarrito(productos)}</p>`);
+
+  //Confirmacion
+  $("#carritoProductos").append(`<div id="divConfirmar" class="text-center"><button id="btnConfirmar" class="btn btn-success">CONFIRMAR</button></div>`);
+
   $(".btn-add").click(addCantidad);
   $(".btn-delete").click(eliminarCarrito);
+  $("#btnConfirmar").click(confirmarCompra);
 
 }
-
+//TOTAL CARRITO
+function totalCarrito(carrito) {
+  console.log(carrito);
+  let total = 0;
+  carrito.forEach(p => total += p.subtotal());
+  return total.toFixed(2);
+}
 
 // Function DOM
-function registroCarrito(producto){
+function registroCarrito(producto) {
   return `<p> ${producto.nombre} 
           <span class="badge bg-success">$ ${producto.precio}</span>
           <span class="badge bg-info">${producto.cantidad}</span>
@@ -75,14 +89,15 @@ function registroCarrito(producto){
 
 
 // Function array
-function renderSelect(lista, id){
+function selectUI(lista, selector) {
   //Empty
-  $(id).empty();
+  $(selector).empty();
 
   //Option
-  for (const item of lista) {
-    $(id).append(`<option value='${item}'>${item}</option>`);
-  }
+  lista.forEach(element => {
+    $(selector).append(`<option value="${element}">${element}</option>`)
+  });
+  $(selector).prepend(`<option value="TODOS" selected>TODOS</option>`)
 }
 
 
@@ -113,11 +128,11 @@ function addCantidad() {
 // Class
 class Producto {
   constructor(id, nombre, precio, categoria, cantidad) {
-          this.id = parseInt(id);
-          this.nombre = nombre;
-          this.precio = parseFloat(precio);
-          this.categoria = categoria;
-          this.cantidad = cantidad || 1;
+    this.id = parseInt(id);
+    this.nombre = nombre;
+    this.precio = parseFloat(precio);
+    this.categoria = categoria;
+    this.cantidad = cantidad || 1;
   }
 
   agregarCantidad(valor) {
@@ -126,18 +141,34 @@ class Producto {
 }
 
 // Ready DOM
-$(document).ready(function(){
-  if("carrito" in localStorage) {
+$(document).ready(function () {
+  if ("carrito" in localStorage) {
     const arrayLiterales = JSON.parse(localStorage.getItem("carrito"));
-    for(const literal of arrayLiterales) {
-      carrito.push(new Producto(literal.id, literal.nombre, literal.precio, literal.categoria));
+    for (const literal of arrayLiterales) {
+      carrito.push(new Producto(literal.id, literal.nombre, literal.precio, literal.categoria, literal.cantidad));
     }
     console.log(carrito);
     carritoUI(carrito);
   }
+  $(".dropdown-menu").click(function (e) {
+    e.stopPropagation();
+  });
+
+  $.get("data/producto.json", function (datos, estado) {
+    console.log(datos);
+    console.log(estado);
+    if (estado == "success") {
+      for(const literal of datos){
+        productos.push(new Producto(literal.id, literal.nombre, literal.precio, literal.categoria, literal.cantidad));
+      }
+    }
+    console.log(productos);
+    productosUIjQuery(productos, '#productosContenedor');
+  });
+
 });
 
-//Arrays
+/* //Arrays
 productos.push(new Producto(1, "Pan", 65, categorias[0]));
 productos.push(new Producto(2, "Medialunas", 130, categorias[0]));
 productos.push(new Producto(3, "Chipa", 150, categorias[0]));
@@ -159,11 +190,26 @@ productos.push(new Producto(18, "Papa", 150, categorias[5]));
 productos.push(new Producto(19, "Cigarrillos", 170, categorias[6]));
 productos.push(new Producto(20, "Pañales", 170, categorias[6]));
 productos.push(new Producto(21, "Pilas", 170, categorias[6]));
-console.log(productos);
+console.log(productos); */
 
 //Jquery CLASS DOM
-productosUIjQuery(productos, '#productosContenedor');
+/* productosUIjQuery(productos, '#productosContenedor'); */
 
+selectUI(categorias, "#filtroCategorias");
+
+$('#filtroCategorias').change(function (e) {
+  const value = this.value;
+
+  $('#productosContenedor').fadeOut(600, function () {
+    if (value == 'TODOS') {
+      productosUIjQuery(productos, '#productosContenedor');
+    } else {
+      const filtrados = productos.filter(producto => producto.categoria == value);
+      productosUIjQuery(filtrados, '#productosContenedor');
+    }
+    $("#productosContenedor").fadeIn();
+  });
+})
 
 $('.btn-compra').on("click", comprarProducto);
 
